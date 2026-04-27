@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBTC FC Landing Page</title>
+    <style>
+        /* Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #120a10; 
+            color: #ffffff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- Particle Canvas --- */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1; /* Keeps particles behind the cards */
+            pointer-events: none; /* Prevents canvas from blocking clicks */
+        }
+
+        /* --- Loader Styles --- */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #120a10 0%, #2a0b17 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease-out;
+        }
+
+        .pulse-text {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            text-shadow: 0 0 20px #e82a63;
+            text-align: center;
+            padding: 0 20px;
+            animation: pulse-glow 1.5s infinite ease-in-out;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        @keyframes pulse-glow {
+            0% { transform: scale(0.95); opacity: 0.8; text-shadow: 0 0 10px #e82a63; }
+            50% { transform: scale(1.05); opacity: 1; text-shadow: 0 0 30px #e82a63, 0 0 40px #e82a63; }
+            100% { transform: scale(0.95); opacity: 0.8; text-shadow: 0 0 10px #e82a63; }
+        }
+
+        /* --- Main Content & Grid --- */
+        #main-content {
+            display: none;
+            padding: 60px 20px;
+            max-width: 1300px;
+            margin: 0 auto;
+            opacity: 0; 
+        }
+
+        .header-title {
+            text-align: center;
+            margin-bottom: 50px;
+            font-size: 2.5rem;
+            color: #e82a63;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 2px 10px rgba(232, 42, 99, 0.4);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            justify-items: center;
+        }
+
+        /* --- Flip Card Styles --- */
+        .card {
+            background-color: transparent;
+            width: 100%;
+            max-width: 380px;
+            aspect-ratio: 4 / 5; 
+            perspective: 1000px; 
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            transform-style: preserve-3d;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        .card:hover .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden; 
+            backface-visibility: hidden;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-front {
+            background-color: #222;
+        }
+
+        .card-front img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #e82a63 0%, #610d2c 100%);
+            color: white;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+
+        .card-back h2 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .card-back p {
+            font-size: 1.8rem;
+            margin: 10px 0;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            width: 80%;
+        }
+
+        .card-back span {
+            color: #ffa5c2;
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: -5px;
+            text-transform: uppercase;
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 650px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+            .pulse-text {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particles-canvas"></canvas>
+
+    <div id="loader">
+        <h1 class="pulse-text">Welcome to SBTC FC</h1>
+    </div>
+
+    <div id="main-content">
+        <h2 class="header-title">SBTC Football Club</h2>
+        
+        <div class="grid-container" id="card-grid">
+            </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const loader = document.getElementById("loader");
+            const mainContent = document.getElementById("main-content");
+            const gridContainer = document.getElementById("card-grid");
+
+            // --- 1. Dynamic Card Generation ---
+            // Arrays for random data generation
+            const playerNames = ["MESS3", "RONALDO", "PELE", "ZIDANE", "MARADONA", "NEYMAR", "MBAPPE", "HAALAND", "KAKA", "ROONEY", "GIGGS", "BAO", "TUAN"];
+            const positions = ["FW", "LW", "RW", "CAM", "CM", "CDM", "CB", "LB", "RB", "GK"];
+
+            const totalCards = 9;
+            for (let i = 0; i < totalCards; i++) {
+                // Pick random data for this specific card
+                const randomName = playerNames[Math.floor(Math.random() * playerNames.length)];
+                const randomNum = Math.floor(Math.random() * 99) + 1; // Random number 1-99
+                const randomPos = positions[Math.floor(Math.random() * positions.length)];
+
+                const cardHTML = `
+                    <div class="card">
+                        <div class="card-inner">
+                            <div class="card-front">
+                                <img src="https://i.postimg.cc/pr9mvS9s/680275479-963947512712544-6859422256807469443-n.jpg" alt="Player Card">
+                            </div>
+                            <div class="card-back">
+                                <h2>${randomName}</h2>
+                                <p><span>Number</span> ${randomNum}</p>
+                                <p><span>Position</span> ${randomPos}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                gridContainer.innerHTML += cardHTML;
+            }
+
+            // --- 2. Loading Logic (5 seconds) ---
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    
+                    requestAnimationFrame(() => {
+                        mainContent.style.transition = 'opacity 0.8s ease-in';
+                        mainContent.style.opacity = '1';
+                    });
+                }, 600); 
+            }, 5000); 
+
+            // --- 3. Particle Background System ---
+            const canvas = document.getElementById("particles-canvas");
+            const ctx = canvas.getContext("2d");
+
+            // Set canvas to full window size
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let particlesArray = [];
+            const numberOfParticles = 80; // Adjust for more/less dots
+
+            // Particle Class
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 2.5 + 0.5; // Random size
+                    this.speedX = (Math.random() * 1) - 0.5; // Random horizontal speed
+                    this.speedY = (Math.random() * 1) - 0.5; // Random vertical speed
+                    // Mix of pink and slightly transparent white
+                    this.color = Math.random() > 0.5 ? 'rgba(232, 42, 99, 0.7)' : 'rgba(255, 255, 255, 0.4)';
+                }
+                
+                // Move particle
+                update() {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+
+                    // Bounce off edges
+                    if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
+                    if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
+                }
+
+                // Draw particle
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+
+            // Initialize Particles
+            function initParticles() {
+                particlesArray = [];
+                for (let i = 0; i < numberOfParticles; i++) {
+                    particlesArray.push(new Particle());
+                }
+            }
+
+            // Animate Loop
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < particlesArray.length; i++) {
+                    particlesArray[i].update();
+                    particlesArray[i].draw();
+                }
+                requestAnimationFrame(animateParticles);
+            }
+
+            initParticles();
+            animateParticles();
+
+            // Resize canvas when window resizes to prevent stretching
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                initParticles(); // Re-initialize to fill new space properly
+            });
+        });
+    </script>
+
+</body>
+</html>
